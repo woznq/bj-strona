@@ -1,0 +1,172 @@
+.game-container {
+  display: flex;
+  width: 80%;
+  margin: 80px auto 0;
+  position: relative;
+  height: 600px;
+}
+
+.controls-panel {
+  width: 25%;
+  background-color: #314559;
+  padding: 20px;
+  border-radius: 8px 0 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 580px;
+}
+
+.bet-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bet-input {
+  padding: 10px;
+  border-radius: 4px;
+  border: none;
+  flex: 1;
+}
+
+.bet-multipliers {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.multiplier-button {
+  padding: 5px 10px;
+  background-color: #1E2D3B;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.start-button {
+  padding: 10px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.start-button.active {
+  background-color: #2e7d32;
+}
+
+.start-button.disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.game-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.game-buttons-row {
+  display: flex;
+  gap: 10px;
+}
+
+.game-button {
+  padding: 10px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  flex: 1;
+}
+
+.game-button.active {
+  background-color: #1E2D3B;
+  cursor: pointer;
+}
+
+.game-button.disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.game-over-panel {
+  margin-top: auto;
+  text-align: center;
+}
+
+.result-message {
+  margin-bottom: 20px;
+}
+
+.result-message.won {
+  color: #4CAF50;
+}
+
+.result-message.lost {
+  color: #F44336;
+}
+
+.result-message.tie {
+  color: #FFC107;
+}
+
+.new-game-button {
+  padding: 10px 20px;
+  background-color: #2e7d32;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+.game-board {
+  position: relative;
+  width: 75%;
+  height: 100%;
+  background-color: #081C2E;
+  padding: 10px;
+  border-radius: 0 8px 8px 0;
+}
+
+.betting-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 2em;
+  text-align: center;
+}
+
+.hand {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.dealer-hand {
+  margin-bottom: 100px;
+}
+
+.player-hand {
+  margin-bottom: 40px;
+}
+
+.hand h2 {
+  color: white;
+}
+
+.card {
+  position: absolute;
+}
+
+.card img {
+  width: 100px;
+  height: auto;
+}
