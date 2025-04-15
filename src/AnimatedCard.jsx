@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import './AnimatedCard.css';
+import axios from 'axios';
 
 import tenOfClubs from './karty/10_of_clubs.png';
 import tenOfDiamonds from './karty/10_of_diamonds.png';
@@ -133,9 +134,51 @@ const AnimatedCard = ({ balance, setBalance }) => {
     setBetAmount(prev => Math.max(0, Math.floor(prev * multiplier)));
   };
 
+  // const startGame = async () => {
+  //   if (betAmount <= 0 || betAmount > balance) return;
+    
+  //   setBalance(prev => prev - betAmount);
+  //   setGameStatus('playing');
+  //   setGamePhase('initial');
+  //   setPlayerHand([]);
+  //   setDealerHand([]);
+  //   setPlayerScore(0);
+  //   setDealerScore(0);
+  //   setIsSecondDealerCardHidden(true);
+
+  //   await new Promise(resolve => setTimeout(resolve, 300));
+  //   const dealDelay = 500;
+
+  //   await dealCard(setPlayerHand, setPlayerScore);
+  //   await new Promise(resolve => setTimeout(resolve, dealDelay));
+  //   await dealCard(setDealerHand, setDealerScore);
+  //   await new Promise(resolve => setTimeout(resolve, dealDelay));
+  //   await dealCard(setPlayerHand, setPlayerScore);
+  //   await new Promise(resolve => setTimeout(resolve, dealDelay));
+  //   await dealCard(setDealerHand, setDealerScore);
+
+  //   setGamePhase('player-turn');
+  // };
+
+
   const startGame = async () => {
     if (betAmount <= 0 || betAmount > balance) return;
-    
+  
+    // Wysyłamy zakład do API
+    try {
+      const res = await axios.post('http://localhost:8000/api/bets/', {
+        game: 1,       // ID gry (Blackjack)
+        user: 1,       // Tymczasowo zakładamy ID użytkownika 1
+        amount: betAmount,
+        rate: 2.0      // Możesz później wyliczać dynamicznie
+      });
+  
+      console.log('Zakład zapisany w Django:', res.data);
+    } catch (err) {
+      console.error('Błąd przy zapisie zakładu:', err);
+      return;
+    }
+  
     setBalance(prev => prev - betAmount);
     setGameStatus('playing');
     setGamePhase('initial');
@@ -144,10 +187,10 @@ const AnimatedCard = ({ balance, setBalance }) => {
     setPlayerScore(0);
     setDealerScore(0);
     setIsSecondDealerCardHidden(true);
-
+  
     await new Promise(resolve => setTimeout(resolve, 300));
     const dealDelay = 500;
-
+  
     await dealCard(setPlayerHand, setPlayerScore);
     await new Promise(resolve => setTimeout(resolve, dealDelay));
     await dealCard(setDealerHand, setDealerScore);
@@ -155,9 +198,10 @@ const AnimatedCard = ({ balance, setBalance }) => {
     await dealCard(setPlayerHand, setPlayerScore);
     await new Promise(resolve => setTimeout(resolve, dealDelay));
     await dealCard(setDealerHand, setDealerScore);
-
+  
     setGamePhase('player-turn');
   };
+  
 
   const dealCard = (handSetter, scoreSetter, afterDrawCallback) => {
     return new Promise((resolve) => {
@@ -192,24 +236,79 @@ const AnimatedCard = ({ balance, setBalance }) => {
   
     dealCard(setPlayerHand, setPlayerScore, (newHand, newScore) => {
       if (newScore > 21) {
-        endGame('lost');
+        endGame('LOSE');
       }
     });
   };
+
+  // const handleStand = () => {
+  //   if (gamePhase !== 'player-turn') return;
+  
+  //   setIsSecondDealerCardHidden(false);
+  //   setGamePhase('dealer-turn');
+  
+  //   const dealerValue = calculateHandValue(dealerHand);
+  //   if (dealerValue >= 17 && dealerHand.length < 5) {
+  //     endGame();
+  //   } else {
+  //     startDealerDrawing();
+  //   }
+  // };
+
+  // const handleStand = async () => {
+  //   if (gamePhase !== 'player-turn') return;
+  
+  //   setIsSecondDealerCardHidden(false);
+  //   setGamePhase('dealer-turn');
+  
+  //   // Dociągaj karty do min. 17
+  //   let dealerVal = calculateHandValue(dealerHand);
+  //   while (dealerVal < 17 && dealerHand.length < 5) {
+  //     await drawDealerCards();
+  //     dealerVal = calculateHandValue(dealerHand);
+  //   }
+  
+  //   endGame();  // teraz mamy pewny stan
+  // };
+  
+
+  // const handleStand = async () => {
+  //   if (gamePhase !== 'player-turn') return;
+  
+  //   setIsSecondDealerCardHidden(false);
+  //   setGamePhase('dealer-turn');
+  
+  //   let dealerVal = calculateHandValue(dealerHand);
+  
+  //   while (dealerVal < 17 && dealerVal <= 21 && dealerHand.length < 5) {
+  //     await drawDealerCards();
+  //     dealerVal = calculateHandValue(dealerHand);
+  //   }
+  
+  //   endGame();
+  // };
+  
+  
+  useEffect(() => {
+    const dealerValue = calculateHandValue(dealerHand);
+  
+    if (gamePhase === 'dealer-turn' && !isDealerDrawing) {
+      if (dealerValue >= 17 || dealerValue > 21 || dealerHand.length >= 5) {
+        endGame(); // kończymy grę
+      } else {
+        startDealerDrawing(); // dobieramy kolejną kartę
+      }
+    }
+  }, [dealerHand, gamePhase, isDealerDrawing]);
+  
 
   const handleStand = () => {
     if (gamePhase !== 'player-turn') return;
   
     setIsSecondDealerCardHidden(false);
-    setGamePhase('dealer-turn');
-  
-    const dealerValue = calculateHandValue(dealerHand);
-    if (dealerValue >= 17 && dealerHand.length < 5) {
-      endGame();
-    } else {
-      startDealerDrawing();
-    }
+    setGamePhase('dealer-turn'); // Resztą zajmie się useEffect
   };
+  
 
   const handleDouble = () => {
     if (gamePhase !== 'player-turn' || playerHand.length !== 2) return;
@@ -233,61 +332,170 @@ const AnimatedCard = ({ balance, setBalance }) => {
     drawDealerCards();
   };
 
-  const drawDealerCards = async () => {
-    setIsDealerDrawing(true);
-    if (isSecondDealerCardHidden) {
-      setIsDealerCardFlipping(true);
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setIsSecondDealerCardHidden(false);
-      setIsDealerCardFlipping(false);
-    }
-    await dealCard(setDealerHand, setDealerScore);
-    setIsDealerDrawing(false);
-  };
+  // const drawDealerCards = async () => {
+  //   setIsDealerDrawing(true);
+  //   if (isSecondDealerCardHidden) {
+  //     setIsDealerCardFlipping(true);
+  //     await new Promise(resolve => setTimeout(resolve, 800));
+  //     setIsSecondDealerCardHidden(false);
+  //     setIsDealerCardFlipping(false);
+  //   }
+  //   await dealCard(setDealerHand, setDealerScore);
+  //   setIsDealerDrawing(false);
+  // };
 
-  useEffect(() => {
-    if (gamePhase === 'dealer-turn' && !isDealerDrawing) {
-      const value = calculateHandValue(dealerHand);
-      if (value >= 17 || value > 21 || dealerHand.length >= 5) {
-        endGame();
-      } else {
-        startDealerDrawing();
+  const drawDealerCards = () => {
+    return new Promise(async (resolve) => {
+      setIsDealerDrawing(true);
+  
+      if (isSecondDealerCardHidden) {
+        setIsDealerCardFlipping(true);
+        await new Promise(res => setTimeout(res, 800));
+        setIsSecondDealerCardHidden(false);
+        setIsDealerCardFlipping(false);
       }
-    }
-  }, [dealerHand, gamePhase, isDealerDrawing]);
+  
+      await dealCard(setDealerHand, setDealerScore);
+      setIsDealerDrawing(false);
+      resolve();
+    });
+  };
+  
 
+  // useEffect(() => {
+  //   if (gamePhase === 'dealer-turn' && !isDealerDrawing) {
+  //     const value = calculateHandValue(dealerHand);
+  //     if (value >= 17 || value > 21 || dealerHand.length >= 5) {
+  //       endGame();
+  //     } else {
+  //       startDealerDrawing();
+  //     }
+  //   }
+  // }, [dealerHand, gamePhase, isDealerDrawing]);
+
+  // const endGame = (forcedResult = null) => {
+  //   setIsDealerDrawing(false);
+    
+  //   setTimeout(() => {
+  //     let result = forcedResult;
+  //     if (!forcedResult) {
+  //       const playerValue = calculateHandValue(playerHand);
+  //       const dealerValue = calculateHandValue(dealerHand);
+        
+  //       if (playerValue > 21) {
+  //         result = 'lost';
+  //       } else if (dealerValue > 21) {
+  //         result = 'won';
+  //       } else if (playerValue > dealerValue) {
+  //         result = 'won';
+  //       } else if (playerValue < dealerValue) {
+  //         result = 'lost';
+  //       } else {
+  //         result = 'tie';
+  //       }
+  //     }
+
+  //     if (result === 'won') {
+  //       setBalance(prev => prev + betAmount * 2);
+  //     } else if (result === 'tie') {
+  //       setBalance(prev => prev + betAmount);
+  //     }
+
+  //     setGameStatus(result);
+  //     setGamePhase('game-over');
+  //   }, 100);
+  // };
+
+  // const endGame = (forcedResult = null) => {
+  //   setIsDealerDrawing(false);
+  
+  //   setTimeout(async () => {
+  //     let result = forcedResult;
+  //     const playerValue = calculateHandValue(playerHand);
+  //     const dealerValue = calculateHandValue(dealerHand);
+  
+  //     if (!forcedResult) {
+  //       if (playerValue > 21) result = 'LOSE';
+  //       else if (dealerValue > 21) result = 'WIN';
+  //       else if (playerValue > dealerValue) result = 'WIN';
+  //       else if (playerValue < dealerValue) result = 'LOSE';
+  //       else result = 'DRAW';
+  //     }
+  
+  //     // Oblicz payout
+  //     let payout = 0;
+  //     if (result === 'WIN') payout = betAmount * 2;
+  //     else if (result === 'DRAW') payout = betAmount;
+  
+  //     // Zapisz wynik do API Django
+  //     try {
+  //       const res = await axios.post('http://localhost:8000/api/results/', {
+  //         game: 1,
+  //         user: 1,
+  //         bet: betAmount,
+  //         payout: payout,
+  //         result: result
+  //       });
+  //       console.log('🎉 GameResult zapisany:', res.data);
+  //     } catch (err) {
+  //       console.error('❌ Błąd zapisu wyniku:', err);
+  //     }
+  
+  //     // Obsługa UI
+  //     if (result === 'WIN') setBalance(prev => prev + payout);
+  //     else if (result === 'DRAW') setBalance(prev => prev + betAmount);
+  
+  //     setGameStatus(result.toLowerCase());
+  //     setGamePhase('game-over');
+  //   }, 100);
+  // };
+  
   const endGame = (forcedResult = null) => {
     setIsDealerDrawing(false);
-    
-    setTimeout(() => {
+  
+    setTimeout(async () => {
+      const finalPlayerScore = calculateHandValue(playerHand);
+      const finalDealerScore = calculateHandValue(dealerHand);
+  
       let result = forcedResult;
+  
       if (!forcedResult) {
-        const playerValue = calculateHandValue(playerHand);
-        const dealerValue = calculateHandValue(dealerHand);
-        
-        if (playerValue > 21) {
-          result = 'lost';
-        } else if (dealerValue > 21) {
-          result = 'won';
-        } else if (playerValue > dealerValue) {
-          result = 'won';
-        } else if (playerValue < dealerValue) {
-          result = 'lost';
-        } else {
-          result = 'tie';
-        }
+        if (finalPlayerScore > 21) result = 'LOSE';
+        else if (finalDealerScore > 21) result = 'WIN';
+        else if (finalPlayerScore > finalDealerScore) result = 'WIN';
+        else if (finalPlayerScore < finalDealerScore) result = 'LOSE';
+        else result = 'DRAW';
       }
-
-      if (result === 'won') {
-        setBalance(prev => prev + betAmount * 2);
-      } else if (result === 'tie') {
-        setBalance(prev => prev + betAmount);
+  
+      let payout = 0;
+      if (result === 'WIN') payout = betAmount * 2;
+      else if (result === 'DRAW') payout = betAmount;
+  
+      try {
+        await axios.post('http://localhost:8000/api/results/', {
+          game: 1,
+          user: 1,
+          bet: betAmount,
+          payout: payout,
+          result: result // "WIN", "LOSE", "DRAW"
+        });
+        console.log('✅ Wynik zapisany:', result);
+      } catch (err) {
+        console.error('❌ Błąd zapisu wyniku:', err.response?.data || err.message);
       }
-
-      setGameStatus(result);
+  
+      if (result === 'WIN') setBalance(prev => prev + payout);
+      else if (result === 'DRAW') setBalance(prev => prev + betAmount);
+  
+      setGameStatus(result.toLowerCase()); // 'win', 'lose', 'draw'
       setGamePhase('game-over');
-    }, 100);
+    }, 300);
   };
+  
+  
+  
+  
+
 
   const handleNewGame = () => {
     setGamePhase('betting');
@@ -375,10 +583,16 @@ const AnimatedCard = ({ balance, setBalance }) => {
 
         {gamePhase === 'game-over' && (
           <div className="game-over-panel">
-            <h2 className={`result-message ${gameStatus}`}>
+            {/* <h2 className={`result-message ${gameStatus}`}>
               {gameStatus === 'won' ? 'You Won!' : 
                gameStatus === 'lost' ? 'You Lost!' : 'It\'s a Tie!'}
+            </h2> */}
+            <h2 className={`result-message ${gameStatus}`}>
+              {gameStatus === 'win' ? 'You Won!' : 
+              gameStatus === 'lose' ? 'You Lost!' : 'It\'s a Tie!'}
             </h2>
+
+
             <button 
               onClick={handleNewGame}
               className="new-game-button"
